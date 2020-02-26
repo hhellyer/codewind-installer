@@ -868,6 +868,54 @@ func Commands() {
 			},
 		},
 		{
+			Name:    "registrysecrets",
+			Aliases: []string{"rs"},
+			Usage:   "Get, set or remove docker registry secrets for Codewind containers",
+			Subcommands: []cli.Command{
+				// {
+				// 	Name:    "set",
+				// 	Aliases: []string{"s"},
+				// 	Usage:   "Set connectionID for a project",
+				// 	Flags: []cli.Flag{
+				// 		cli.StringFlag{Name: "id,i", Usage: "Project ID", Required: true},
+				// 		cli.StringFlag{Name: "conid", Usage: "Connection ID", Required: true},
+				// 	},
+				// 	Action: func(c *cli.Context) error {
+				// 		ProjectSetConnection(c)
+				// 		return nil
+				// 	},
+				// },
+				{
+					Name:    "get",
+					Aliases: []string{"g"},
+					Usage:   "Get registrysecrets for a project",
+					Flags: []cli.Flag{
+						cli.StringFlag{
+							Name:  "conid",
+							Usage: "ConnectionID to access registry secrets for",
+							Value: "local",
+						},
+					},
+					Action: func(c *cli.Context) error {
+						GetRegistrySecrets(c)
+						return nil
+					},
+				},
+				// {
+				// 	Name:    "remove",
+				// 	Aliases: []string{"r"},
+				// 	Usage:   "Remove connection from a project",
+				// 	Flags: []cli.Flag{
+				// 		cli.StringFlag{Name: "id,i", Usage: "Project ID", Required: true},
+				// 	},
+				// 	Action: func(c *cli.Context) error {
+				// 		ProjectRemoveConnection(c)
+				// 		return nil
+				// 	},
+				// },
+			},
+		},
+		{
 			Name:    "version",
 			Aliases: []string{"v"},
 			Usage:   "Get versions of deployed Codewind containers",

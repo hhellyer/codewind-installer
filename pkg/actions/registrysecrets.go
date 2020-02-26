@@ -47,3 +47,30 @@ func GetRegistrySecrets(c *cli.Context) {
 	}
 	utils.PrettyPrintJSON(registrySecrets)
 }
+
+func SetRegistrySecrets(c *cli.Context) {
+	connectionID := strings.TrimSpace(strings.ToLower(c.String("conid")))
+
+	conInfo, conInfoErr := connections.GetConnectionByID(connectionID)
+	if conInfoErr != nil {
+		fmt.Println(conInfoErr.Err)
+		os.Exit(1)
+	}
+
+	conURL, conErr := config.PFEOriginFromConnection(conInfo)
+	if conErr != nil {
+		fmt.Println(conErr.Err)
+		os.Exit(1)
+	}
+
+	address := strings.TrimSpace(strings.ToLower(c.String("address")))
+	username := strings.TrimSpace(strings.ToLower(c.String("username")))
+	password := strings.TrimSpace(strings.ToLower(c.String("password")))
+
+	registrySecrets, err := apiroutes.SetRegistrySecrets(conInfo, conURL, http.DefaultClient, address, username, password)
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(1)
+	}
+	utils.PrettyPrintJSON(registrySecrets)
+}

@@ -12,6 +12,8 @@
 package apiroutes
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"io/ioutil"
@@ -30,18 +32,49 @@ type (
 	}
 
 	// Registry details: The request structure to set the log level
-	RegistryDetails struct {
-		Level string `json:"level"`
+	RegistryParameters struct {
+		Address     string `json:"address"`
+		Credentials string `json:"credentials"`
+	}
+
+	// Credentials structure. Sent as a base64 encoded string.
+	Credentials struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
 	}
 )
 
-// GetLogLevel : Get the current log level for the PFE container
+// GetRegistrySecrets : Get the current registry secrets for the PFE container
 func GetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient) ([]RegistryResponse, error) {
 	req, err := http.NewRequest("GET", conURL+"/api/v1/registrysecrets", nil)
 	if err != nil {
 		return nil, err
 	}
 
+	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+}
+
+// SetRegistrySecrets : Set a registry secret in the PFE container
+func SetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string, username string, password string) ([]RegistryResponse, error) {
+
+	// The username and password are sent inside a base64 encoded field in the jsonPayload.
+	credentials := &Credentials{Username: username, Password: password}
+	credentialsStr, _ := json.Marshal(credentials)
+	credentialsBase64 := base64.StdEncoding.EncodeToString([]byte(credentialsStr))
+	registryParameters := &RegistryParameters{Address: address, Credentials: credentialsBase64}
+	jsonPayload, _ := json.Marshal(registryParameters)
+
+	req, err := http.NewRequest("POST", conURL+"/api/v1/registrysecrets", bytes.NewBuffer(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		return nil, err
+	}
+
+	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+}
+
+// All three API calls (GET, POST and DELETE) return the same response.
+func handleRegistrySecretsResponse(req *http.Request, conInfo *connections.Connection, httpClient utils.HTTPClient) ([]RegistryResponse, error) {
 	resp, httpSecError := sechttp.DispatchHTTPRequest(httpClient, req, conInfo)
 	if httpSecError != nil {
 		return nil, httpSecError

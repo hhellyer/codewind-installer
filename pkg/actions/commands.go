@@ -872,29 +872,27 @@ func Commands() {
 			Aliases: []string{"rs"},
 			Usage:   "Get, set or remove docker registry secrets for Codewind containers",
 			Subcommands: []cli.Command{
-				// {
-				// 	Name:    "set",
-				// 	Aliases: []string{"s"},
-				// 	Usage:   "Set connectionID for a project",
-				// 	Flags: []cli.Flag{
-				// 		cli.StringFlag{Name: "id,i", Usage: "Project ID", Required: true},
-				// 		cli.StringFlag{Name: "conid", Usage: "Connection ID", Required: true},
-				// 	},
-				// 	Action: func(c *cli.Context) error {
-				// 		ProjectSetConnection(c)
-				// 		return nil
-				// 	},
-				// },
+				{
+					Name:    "set",
+					Aliases: []string{"s"},
+					Usage:   "Set a registry secret",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "conid", Value: "local", Usage: "Connection ID", Required: false},
+						cli.StringFlag{Name: "address,a", Value: "local", Usage: "Registry address", Required: true},
+						cli.StringFlag{Name: "username,u", Value: "local", Usage: "Registry username", Required: true},
+						cli.StringFlag{Name: "password,p", Value: "local", Usage: "Registry password", Required: true},
+					},
+					Action: func(c *cli.Context) error {
+						SetRegistrySecrets(c)
+						return nil
+					},
+				},
 				{
 					Name:    "get",
 					Aliases: []string{"g"},
-					Usage:   "Get registrysecrets for a project",
+					Usage:   "Get all registry secrets",
 					Flags: []cli.Flag{
-						cli.StringFlag{
-							Name:  "conid",
-							Usage: "ConnectionID to access registry secrets for",
-							Value: "local",
-						},
+						cli.StringFlag{Name: "conid", Value: "local", Usage: "Connection ID", Required: false},
 					},
 					Action: func(c *cli.Context) error {
 						GetRegistrySecrets(c)

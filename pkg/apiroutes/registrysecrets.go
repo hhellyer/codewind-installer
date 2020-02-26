@@ -42,6 +42,11 @@ type (
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+
+	// Address parameter, used when removing credentials.
+	AddressParameter struct {
+		Address string `json:"address"`
+	}
 )
 
 // GetRegistrySecrets : Get the current registry secrets for the PFE container
@@ -55,7 +60,7 @@ func GetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClie
 }
 
 // SetRegistrySecrets : Set a registry secret in the PFE container
-func SetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string, username string, password string) ([]RegistryResponse, error) {
+func SetRegistrySecret(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string, username string, password string) ([]RegistryResponse, error) {
 
 	// The username and password are sent inside a base64 encoded field in the jsonPayload.
 	credentials := &Credentials{Username: username, Password: password}
@@ -65,6 +70,22 @@ func SetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClie
 	jsonPayload, _ := json.Marshal(registryParameters)
 
 	req, err := http.NewRequest("POST", conURL+"/api/v1/registrysecrets", bytes.NewBuffer(jsonPayload))
+	req.Header.Set("Content-Type", "application/json")
+	if err != nil {
+		return nil, err
+	}
+
+	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+}
+
+// RemoveRegistrySecret : Remove a registry secret from the PFE container
+func RemoveRegistrySecret(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string) ([]RegistryResponse, error) {
+
+	// The username and password are sent inside a base64 encoded field in the jsonPayload.
+	addressParameter := &AddressParameter{Address: address}
+	jsonPayload, _ := json.Marshal(addressParameter)
+
+	req, err := http.NewRequest("DELETE", conURL+"/api/v1/registrysecrets", bytes.NewBuffer(jsonPayload))
 	req.Header.Set("Content-Type", "application/json")
 	if err != nil {
 		return nil, err

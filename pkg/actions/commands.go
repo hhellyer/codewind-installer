@@ -883,7 +883,7 @@ func Commands() {
 						cli.StringFlag{Name: "password,p", Value: "local", Usage: "Registry password", Required: true},
 					},
 					Action: func(c *cli.Context) error {
-						SetRegistrySecrets(c)
+						SetRegistrySecret(c)
 						return nil
 					},
 				},
@@ -899,18 +899,19 @@ func Commands() {
 						return nil
 					},
 				},
-				// {
-				// 	Name:    "remove",
-				// 	Aliases: []string{"r"},
-				// 	Usage:   "Remove connection from a project",
-				// 	Flags: []cli.Flag{
-				// 		cli.StringFlag{Name: "id,i", Usage: "Project ID", Required: true},
-				// 	},
-				// 	Action: func(c *cli.Context) error {
-				// 		ProjectRemoveConnection(c)
-				// 		return nil
-				// 	},
-				// },
+				{
+					Name:    "remove",
+					Aliases: []string{"r"},
+					Usage:   "Remove a registry secret",
+					Flags: []cli.Flag{
+						cli.StringFlag{Name: "conid", Value: "local", Usage: "Connection ID", Required: false},
+						cli.StringFlag{Name: "address,a", Value: "local", Usage: "Registry address", Required: true},
+					},
+					Action: func(c *cli.Context) error {
+						RemoveRegistrySecret(c)
+						return nil
+					},
+				},
 			},
 		},
 		{

@@ -23,33 +23,27 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// func Test_GetRegistrySecrets(t *testing.T) {
-// 	allLevels := []string{"error", "warn", "info", "debug", "trace"}
-// 	loggingResponse := LoggingResponse{
-// 		CurrentLevel: "debug",
-// 		DefaultLevel: "info",
-// 		AllLevels:    allLevels,
-// 	}
-// 	mockConnection := connections.Connection{ID: "local"}
-// 	t.Run("success case - correct logging levels are returned", func(t *testing.T) {
-// 		jsonResponse, err := json.Marshal(loggingResponse)
-// 		if err != nil {
-// 			t.Fail()
-// 		}
-// 		body := ioutil.NopCloser(bytes.NewReader([]byte(jsonResponse)))
-// 		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusOK, Body: body}
-// 		gotSecrets, err := GetRegistrySecrets(&mockConnection, "mockURL", mockClient)
-// 		if err != nil {
-// 			t.Fail()
-// 		}
-// 		assert.Equal(t, gotSecrets, loggingResponse)
-// 	})
-// 	t.Run("error case - returns error when PFE status code non 200", func(t *testing.T) {
-// 		mockClientFalse := &security.ClientMockAuthenticate{StatusCode: http.StatusNotFound, Body: nil}
-// 		_, err := GetIgnoredPaths(mockClientFalse, &mockConnection, "nodejs", "dummyurl")
-// 		assert.Error(t, err)
-// 	})
-// }
+func Test_GetRegistrySecrets(t *testing.T) {
+	t.Run("success case - returns nil error when PFE status code 200", func(t *testing.T) {
+		expectedRegistrySecrets := []RegistryResponse{RegistryResponse{Address: "testdockerregistry", Username: "testuser"}}
+		jsonResponse, err := json.Marshal(expectedRegistrySecrets)
+		if err != nil {
+			t.Fail()
+		}
+		body := ioutil.NopCloser(bytes.NewReader([]byte(jsonResponse)))
+		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusOK, Body: body}
+		mockConnection := connections.Connection{ID: "local"}
+		actualRegistrySecrets, err := GetRegistrySecrets(&mockConnection, "mockURL", mockClient)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRegistrySecrets, actualRegistrySecrets)
+	})
+	t.Run("error case - returns error when PFE status code non 200", func(t *testing.T) {
+		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusBadRequest, Body: nil}
+		mockConnection := connections.Connection{ID: "local"}
+		_, err := GetRegistrySecrets(&mockConnection, "mockURL", mockClient)
+		assert.Error(t, err)
+	})
+}
 
 func Test_SetRegistrySecret(t *testing.T) {
 
@@ -66,10 +60,32 @@ func Test_SetRegistrySecret(t *testing.T) {
 		assert.Nil(t, err)
 		assert.Equal(t, expectedRegistrySecrets, actualRegistrySecrets)
 	})
-	// t.Run("error case - returns error when PFE status code non 200", func(t *testing.T) {
-	// 	mockConnection := connections.Connection{ID: "local"}
-	// 	mockClientFalse := &security.ClientMockAuthenticate{StatusCode: http.StatusNotFound, Body: nil}
-	// 	_, err := GetIgnoredPaths(mockClientFalse, &mockConnection, "nodejs", "dummyurl")
-	// 	assert.Error(t, err)
-	// })
+	t.Run("error case - returns error when PFE status code non 200", func(t *testing.T) {
+		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusBadRequest, Body: nil}
+		mockConnection := connections.Connection{ID: "local"}
+		_, err := SetRegistrySecret(&mockConnection, "mockURL", mockClient, "testdockerregistry", "testuser", "testpassword")
+		assert.Error(t, err)
+	})
+}
+
+func Test_DeleteRegistrySecret(t *testing.T) {
+	t.Run("success case - returns nil error when PFE status code 200", func(t *testing.T) {
+		expectedRegistrySecrets := []RegistryResponse{RegistryResponse{Address: "testdockerregistry", Username: "testuser"}}
+		jsonResponse, err := json.Marshal(expectedRegistrySecrets)
+		if err != nil {
+			t.Fail()
+		}
+		body := ioutil.NopCloser(bytes.NewReader([]byte(jsonResponse)))
+		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusOK, Body: body}
+		mockConnection := connections.Connection{ID: "local"}
+		actualRegistrySecrets, err := RemoveRegistrySecret(&mockConnection, "mockURL", mockClient, "anothertestdockerregistry")
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRegistrySecrets, actualRegistrySecrets)
+	})
+	t.Run("error case - returns error when PFE status code non 200", func(t *testing.T) {
+		mockClient := &security.ClientMockAuthenticate{StatusCode: http.StatusBadRequest, Body: nil}
+		mockConnection := connections.Connection{ID: "local"}
+		_, err := RemoveRegistrySecret(&mockConnection, "mockURL", mockClient, "afakeregistry")
+		assert.Error(t, err)
+	})
 }

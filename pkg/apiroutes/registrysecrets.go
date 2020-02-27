@@ -56,11 +56,11 @@ func GetRegistrySecrets(conInfo *connections.Connection, conURL string, httpClie
 		return nil, err
 	}
 
-	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+	return handleRegistrySecretsResponse(req, conInfo, httpClient, http.StatusOK)
 }
 
 // SetRegistrySecrets : Set a registry secret in the PFE container
-func SetRegistrySecret(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string, username string, password string) ([]RegistryResponse, error) {
+func AddRegistrySecret(conInfo *connections.Connection, conURL string, httpClient utils.HTTPClient, address string, username string, password string) ([]RegistryResponse, error) {
 
 	// The username and password are sent inside a base64 encoded field in the jsonPayload.
 	credentials := &Credentials{Username: username, Password: password}
@@ -75,7 +75,7 @@ func SetRegistrySecret(conInfo *connections.Connection, conURL string, httpClien
 		return nil, err
 	}
 
-	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+	return handleRegistrySecretsResponse(req, conInfo, httpClient, http.StatusCreated)
 }
 
 // RemoveRegistrySecret : Remove a registry secret from the PFE container
@@ -91,17 +91,17 @@ func RemoveRegistrySecret(conInfo *connections.Connection, conURL string, httpCl
 		return nil, err
 	}
 
-	return handleRegistrySecretsResponse(req, conInfo, httpClient)
+	return handleRegistrySecretsResponse(req, conInfo, httpClient, http.StatusOK)
 }
 
 // All three API calls (GET, POST and DELETE) return the same response.
-func handleRegistrySecretsResponse(req *http.Request, conInfo *connections.Connection, httpClient utils.HTTPClient) ([]RegistryResponse, error) {
+func handleRegistrySecretsResponse(req *http.Request, conInfo *connections.Connection, httpClient utils.HTTPClient, successCode int) ([]RegistryResponse, error) {
 	resp, httpSecError := sechttp.DispatchHTTPRequest(httpClient, req, conInfo)
 	if httpSecError != nil {
 		return nil, httpSecError
 	}
 
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != successCode {
 		return nil, errors.New(http.StatusText(resp.StatusCode))
 	}
 

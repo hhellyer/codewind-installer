@@ -48,7 +48,7 @@ func GetRegistrySecrets(c *cli.Context) {
 	utils.PrettyPrintJSON(registrySecrets)
 }
 
-func SetRegistrySecret(c *cli.Context) {
+func AddRegistrySecret(c *cli.Context) {
 	connectionID := strings.TrimSpace(strings.ToLower(c.String("conid")))
 
 	conInfo, conInfoErr := connections.GetConnectionByID(connectionID)
@@ -67,7 +67,7 @@ func SetRegistrySecret(c *cli.Context) {
 	username := strings.TrimSpace(c.String("username"))
 	password := strings.TrimSpace(c.String("password"))
 
-	registrySecrets, err := apiroutes.SetRegistrySecret(conInfo, conURL, http.DefaultClient, address, username, password)
+	registrySecrets, err := apiroutes.AddRegistrySecret(conInfo, conURL, http.DefaultClient, address, username, password)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(1)

@@ -50,6 +50,24 @@ func AddRegistrySecret(c *cli.Context) {
 		HandleRegistryError(registryErr)
 		os.Exit(1)
 	}
+
+	// if local connection....
+	fmt.Printf("conInfo.ID = %v\n", conInfo.ID)
+	if conInfo.ID == "local" {
+		// TODO
+		// - Do docker login here.
+		dockerClient, dockerErr := utils.NewDockerClient()
+		if dockerErr != nil {
+			HandleDockerError(dockerErr)
+			os.Exit(1)
+		}
+		dockerErr = utils.DockerLogin(dockerClient, address, username, password)
+		// TODO
+		// - Write to keychain.
+		fmt.Println("Local connection, adding secret to keychain entry.")
+
+	}
+
 	utils.PrettyPrintJSON(registrySecrets)
 }
 
@@ -65,6 +83,9 @@ func RemoveRegistrySecret(c *cli.Context) {
 		HandleRegistryError(registryErr)
 		os.Exit(1)
 	}
+
+	// TODO - Remove secret from our keychain entry.
+	// (But don't logout of docker.)
 	utils.PrettyPrintJSON(registrySecrets)
 }
 

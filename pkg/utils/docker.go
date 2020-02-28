@@ -53,7 +53,7 @@ var containerNames = [...]string{
 
 // codewind-docker-compose.yaml data
 var data = `
-version: 2
+version: 3.7
 services:
  ` + pfeContainerName + `:
   image: ${PFE_IMAGE_NAME}${PLATFORM}:${TAG}
@@ -72,6 +72,7 @@ services:
   ports: ["127.0.0.1:${PFE_EXTERNAL_PORT}:9090"]
   volumes: ["/var/run/docker.sock:/var/run/docker.sock","cw-workspace:/codewind-workspace","${WORKSPACE_DIRECTORY}:/mounted-workspace"]
   networks: [network]
+  secrets: [big_secret]
  ` + performanceContainerName + `:
   image: ${PERFORMANCE_IMAGE_NAME}${PLATFORM}:${TAG}
   ports: ["127.0.0.1:9095:9095"]
@@ -83,6 +84,9 @@ networks:
     com.docker.network.bridge.host_binding_ipv4: "127.0.0.1"
 volumes:
   cw-workspace:
+secrets:
+  big_secret:
+    file: /tmp/secret.txt
 `
 
 // Compose struct for the docker compose yaml file
@@ -98,6 +102,7 @@ type Compose struct {
 			Ports         []string `yaml:"ports"`
 			Volumes       []string `yaml:"volumes"`
 			Networks      []string `yaml:"networks"`
+			Secrets       []string `yaml:"secrets"`
 		} `yaml:"codewind-pfe"`
 		PERFORMANCE struct {
 			Image         string   `yaml:"image"`
@@ -117,6 +122,11 @@ type Compose struct {
 			} `yaml:"driver_opts"`
 		} `yaml:"network"`
 	} `yaml:"networks"`
+	SECRETS struct {
+		BIGSECRET struct {
+			File string `yaml:"file"`
+		} `yaml:"big_secret"`
+	} `yaml:"secrets"`
 }
 
 // constant to identify the internal port of PFE in its container
@@ -139,6 +149,7 @@ type DockerClient interface {
 	ContainerStop(ctx context.Context, containerID string, timeout *time.Duration) error
 	ContainerRemove(ctx context.Context, containerID string, options types.ContainerRemoveOptions) error
 	DistributionInspect(ctx context.Context, image, encodedRegistryAuth string) (registry.DistributionInspect, error)
+	RegistryLogin(ctx context.Context, auth types.AuthConfig) (registry.AuthenticateOKBody, error)
 }
 
 // NewDockerClient creates a new client for the docker API
@@ -593,4 +604,19 @@ func GetContainerTags(dockerClient DockerClient) ([]string, *DockerError) {
 	}
 	tagArr = RemoveDuplicateEntries(tagArr)
 	return tagArr, nil
+}
+
+// DockerLogin : Login to a docker registry with the provided credentials.
+func DockerLogin(dockerClient DockerClient, address string, username string, password string) *DockerError {
+	ctx := context.Background()
+	// Remove docker.io
+	address = strings.TrimPrefix(address, "docker.io/")
+	authConfig := types.AuthConfig{ServerAddress: address, Username: username, Password: password}
+	authOkBody, err := dockerClient.RegistryLogin(ctx, authConfig)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		return &DockerError{errOpContainerList, err, err.Error()}
+	}
+	fmt.Printf("authOkBody: %v\n", authOkBody)
+	return nil
 }

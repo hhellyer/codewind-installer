@@ -32,7 +32,9 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
 	"github.com/docker/docker/pkg/term"
+	desktoputils "github.com/eclipse/codewind-installer/pkg/desktop_utils"
 	logr "github.com/sirupsen/logrus"
+	"github.com/zalando/go-keyring"
 )
 
 const pfeImageName = "eclipse/codewind-pfe"
@@ -50,6 +52,9 @@ var containerNames = [...]string{
 	pfeContainerName,
 	performanceContainerName,
 }
+
+var homeDir = desktoputils.GetHomeDir()
+var dockerConfigFile = homeDir + "/.codewind/dockerconfig"
 
 // codewind-docker-compose.yaml data
 var data = `
@@ -72,7 +77,7 @@ services:
   ports: ["127.0.0.1:${PFE_EXTERNAL_PORT}:9090"]
   volumes: ["/var/run/docker.sock:/var/run/docker.sock","cw-workspace:/codewind-workspace","${WORKSPACE_DIRECTORY}:/mounted-workspace"]
   networks: [network]
-  secrets: [big_secret]
+  secrets: [dockerconfig]
  ` + performanceContainerName + `:
   image: ${PERFORMANCE_IMAGE_NAME}${PLATFORM}:${TAG}
   ports: ["127.0.0.1:9095:9095"]
@@ -85,8 +90,8 @@ networks:
 volumes:
   cw-workspace:
 secrets:
-  big_secret:
-    file: /tmp/secret.txt
+  dockerconfig:
+    file: ` + dockerConfigFile + `
 `
 
 // Compose struct for the docker compose yaml file
@@ -123,11 +128,24 @@ type Compose struct {
 		} `yaml:"network"`
 	} `yaml:"networks"`
 	SECRETS struct {
-		BIGSECRET struct {
+		DOCKERCONFIG struct {
 			File string `yaml:"file"`
-		} `yaml:"big_secret"`
+		} `yaml:"dockerconfig"`
 	} `yaml:"secrets"`
 }
+
+type (
+	// DockerCredential : A single login for a docker registry.
+	DockerCredential struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	// DockerConfig : The docker config.json object.
+	DockerConfig struct {
+		Auths map[string]DockerCredential `json:"auths"`
+	}
+)
 
 // constant to identify the internal port of PFE in its container
 const internalPFEPort = 9090
@@ -619,4 +637,43 @@ func DockerLogin(dockerClient DockerClient, address string, username string, pas
 	}
 	fmt.Printf("authOkBody: %v\n", authOkBody)
 	return nil
+}
+
+// GetDockerCredentials : Get the existing docker credentials from the keychain.
+func GetDockerCredentials(connectionID string) *DockerConfig {
+	secret, error := keyring.Get("org.eclipse.codewind"+"."+connectionID, "docker_credentials")
+	if error != nil {
+		if error == keyring.ErrNotFound {
+			secret = "{\"auths\": {}}"
+		} else {
+			fmt.Println("Unable to find registry secrets in keychain")
+			os.Exit(1)
+		}
+	}
+
+	dockerConfig := DockerConfig{}
+
+	jsonErr := json.Unmarshal([]byte(secret), &dockerConfig)
+
+	if jsonErr != nil {
+		fmt.Printf("Error, invalid json in docker config keychain entry - %s\n", jsonErr)
+		os.Exit(1)
+	}
+
+	return &dockerConfig
+}
+
+// SetDockerCredentials : Set the docker credentials in the keychain.
+func SetDockerCredentials(connectionID string, dockerConfig *DockerConfig) {
+	newSecretBytes, jsonErr := json.Marshal(dockerConfig)
+	// This shouldn't happen as we don't add anything that can't be encoded to the
+	// structure.
+	if jsonErr != nil {
+		fmt.Printf("Error, invalid json in docker config structure - %s\n", jsonErr)
+		os.Exit(1)
+	}
+	newSecret := string(newSecretBytes)
+	fmt.Printf("newSecret = %s\n", newSecret)
+	fmt.Println("Local connection, adding secret to keychain entry.")
+	keyring.Set("org.eclipse.codewind"+"."+connectionID, "docker_credentials", newSecret)
 }

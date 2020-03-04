@@ -14,6 +14,7 @@ package utils
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	goErr "errors"
 	"fmt"
@@ -139,6 +140,7 @@ type (
 	DockerCredential struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
+		Auth     string `json:"auth"`
 	}
 
 	// DockerConfig : The docker config.json object.
@@ -639,8 +641,25 @@ func DockerLogin(dockerClient DockerClient, address string, username string, pas
 	return nil
 }
 
-// GetDockerCredentials : Get the existing docker credentials from the keychain.
-func GetDockerCredentials(connectionID string) *DockerConfig {
+// AddDockerCredential : Add (or update) a single docker login in the keychain entry.
+func AddDockerCredential(connectionID string, address string, username string, password string) {
+	dockerConfig := getDockerCredentials(connectionID)
+	authStr := fmt.Sprintf("%s:%s", username, password)
+	authEncoded := base64.StdEncoding.EncodeToString([]byte(authStr))
+	newDockerCredential := DockerCredential{Auth: authEncoded, Username: username, Password: password}
+	dockerConfig.Auths[address] = newDockerCredential
+	setDockerCredentials(connectionID, dockerConfig)
+}
+
+// RemoveDockerCredential : Remove a single docker login in the keychain entry.
+func RemoveDockerCredential(connectionID string, address string) {
+	dockerConfig := getDockerCredentials(connectionID)
+	delete(dockerConfig.Auths, address)
+	setDockerCredentials(connectionID, dockerConfig)
+}
+
+// getDockerCredentials : Get the existing docker credentials from the keychain.
+func getDockerCredentials(connectionID string) *DockerConfig {
 	secret, error := keyring.Get("org.eclipse.codewind"+"."+connectionID, "docker_credentials")
 	if error != nil {
 		if error == keyring.ErrNotFound {
@@ -663,9 +682,9 @@ func GetDockerCredentials(connectionID string) *DockerConfig {
 	return &dockerConfig
 }
 
-// SetDockerCredentials : Set the docker credentials in the keychain.
-func SetDockerCredentials(connectionID string, dockerConfig *DockerConfig) {
-	newSecretBytes, jsonErr := json.Marshal(dockerConfig)
+// setDockerCredentials : Set the docker credentials in the keychain.
+func setDockerCredentials(connectionID string, dockerConfig *DockerConfig) {
+	newSecretBytes, jsonErr := json.MarshalIndent(dockerConfig, "", "  ")
 	// This shouldn't happen as we don't add anything that can't be encoded to the
 	// structure.
 	if jsonErr != nil {

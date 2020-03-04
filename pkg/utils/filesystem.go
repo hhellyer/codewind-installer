@@ -87,8 +87,8 @@ func WriteToComposeFile(dockerComposeFile string, debug bool) bool {
 }
 
 func writeDockerConfigFile() {
-	dockerConfig := GetDockerCredentials("local")
-	dockerConfigBytes, jsonErr := json.Marshal(dockerConfig)
+	dockerConfig := getDockerCredentials("local")
+	dockerConfigBytes, jsonErr := json.MarshalIndent(dockerConfig, "", "  ")
 	if jsonErr != nil {
 		errors.CheckErr(jsonErr, 208, "")
 	}

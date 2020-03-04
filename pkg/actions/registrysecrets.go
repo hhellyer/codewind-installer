@@ -52,7 +52,6 @@ func AddRegistrySecret(c *cli.Context) {
 	}
 
 	// if local connection....
-	fmt.Printf("conInfo.ID = %v\n", conInfo.ID)
 	if conInfo.ID == "local" {
 		// TODO
 		// - Do docker login here. May need to log in with docker executable,
@@ -64,42 +63,8 @@ func AddRegistrySecret(c *cli.Context) {
 		// 	os.Exit(1)
 		// }
 		// dockerErr = utils.DockerLogin(dockerClient, address, username, password)
-		// TODO
-		// - Write to keychain.
 
-		// secret, error := keyring.Get(security.KeyringServiceName+"."+conInfo.ID, "docker_credentials")
-		// if error != nil {
-		// 	if error == keyring.ErrNotFound {
-		// 		secret = "{\"auths\": {}}"
-		// 	} else {
-		// 		fmt.Println("Unable to find registry secrets in keychain")
-		// 		os.Exit(1)
-		// 	}
-		// }
-
-		// dockerConfig := DockerConfig{}
-
-		// jsonErr := json.Unmarshal([]byte(secret), &dockerConfig)
-
-		// if jsonErr != nil {
-		// 	fmt.Printf("Error, invalid json in docker config keychain entry - %s\n", jsonErr)
-		// 	os.Exit(1)
-		// }
-
-		dockerConfig := utils.GetDockerCredentials(conInfo.ID)
-
-		newDockerCredential := utils.DockerCredential{Username: username, Password: password}
-
-		dockerConfig.Auths[address] = newDockerCredential
-
-		utils.SetDockerCredentials(conInfo.ID, dockerConfig)
-
-		// newSecretBytes, jsonErr := json.Marshal(dockerConfig)
-		// newSecret := string(newSecretBytes)
-		// fmt.Printf("newSecret = %s\n", newSecret)
-
-		// fmt.Println("Local connection, adding secret to keychain entry.")
-		// keyring.Set(security.KeyringServiceName+"."+conInfo.ID, "docker_credentials", newSecret)
+		utils.AddDockerCredential(conInfo.ID, address, username, password)
 
 	}
 
@@ -118,49 +83,11 @@ func RemoveRegistrySecret(c *cli.Context) {
 		HandleRegistryError(registryErr)
 		os.Exit(1)
 	}
-
-	// TODO - Remove secret from our keychain entry.
-	// (But don't logout of docker.)
+	// Remove secret from our keychain entry.
+	// (But don't logout of docker locally.)
+	utils.RemoveDockerCredential(conInfo.ID, address)
 	utils.PrettyPrintJSON(registrySecrets)
 }
-
-// // GetDockerCredentials : Get the existing docker credentials from the keychain.
-// func GetDockerCredentials(connectionID string) *DockerConfig {
-// 	secret, error := keyring.Get(security.KeyringServiceName+"."+connectionID, "docker_credentials")
-// 	if error != nil {
-// 		if error == keyring.ErrNotFound {
-// 			secret = "{\"auths\": {}}"
-// 		} else {
-// 			fmt.Println("Unable to find registry secrets in keychain")
-// 			os.Exit(1)
-// 		}
-// 	}
-
-// 	dockerConfig := DockerConfig{}
-
-// 	jsonErr := json.Unmarshal([]byte(secret), &dockerConfig)
-
-// 	if jsonErr != nil {
-// 		fmt.Printf("Error, invalid json in docker config keychain entry - %s\n", jsonErr)
-// 		os.Exit(1)
-// 	}
-
-// 	return &dockerConfig
-// }
-
-// func setDockerCredentials(connectionID string, dockerConfig *DockerConfig) {
-// 	newSecretBytes, jsonErr := json.Marshal(dockerConfig)
-// 	// This shouldn't happen as we don't add anything that can't be encoded to the
-// 	// structure.
-// 	if jsonErr != nil {
-// 		fmt.Printf("Error, invalid json in docker config structure - %s\n", jsonErr)
-// 		os.Exit(1)
-// 	}
-// 	newSecret := string(newSecretBytes)
-// 	fmt.Printf("newSecret = %s\n", newSecret)
-// 	fmt.Println("Local connection, adding secret to keychain entry.")
-// 	keyring.Set(security.KeyringServiceName+"."+connectionID, "docker_credentials", newSecret)
-// }
 
 func getConnectionDetailsOrExit(c *cli.Context) (*connections.Connection, string) {
 	connectionID := strings.TrimSpace(strings.ToLower(c.String("conid")))

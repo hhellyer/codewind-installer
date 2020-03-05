@@ -51,21 +51,11 @@ func AddRegistrySecret(c *cli.Context) {
 		os.Exit(1)
 	}
 
-	// if local connection....
+	// If this is a local we need to persist the details in the keychain for
+	// the next time codewind starts.
+	// (On Kubernetes PFE persists them in a secret inside Kubernetes itself.)
 	if conInfo.ID == "local" {
-		// TODO
-		// - Do docker login here. May need to log in with docker executable,
-		//   the docker API returns a token for accessing docker on further API
-		//   calls, it doesn't save local credentials.
-		// dockerClient, dockerErr := utils.NewDockerClient()
-		// if dockerErr != nil {
-		// 	HandleDockerError(dockerErr)
-		// 	os.Exit(1)
-		// }
-		// dockerErr = utils.DockerLogin(dockerClient, address, username, password)
-
 		utils.AddDockerCredential(conInfo.ID, address, username, password)
-
 	}
 
 	utils.PrettyPrintJSON(registrySecrets)

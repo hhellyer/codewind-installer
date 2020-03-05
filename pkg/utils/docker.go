@@ -23,6 +23,7 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"path"
 	"runtime"
 	"strconv"
 	"strings"
@@ -55,7 +56,7 @@ var containerNames = [...]string{
 }
 
 var homeDir = desktoputils.GetHomeDir()
-var dockerConfigFile = homeDir + "/.codewind/dockerconfig"
+var dockerConfigSecretFile = path.Join(homeDir, ".codewind", "dockerconfig")
 
 // codewind-docker-compose.yaml data
 var data = `
@@ -92,7 +93,7 @@ volumes:
   cw-workspace:
 secrets:
   dockerconfig:
-    file: ` + dockerConfigFile + `
+    file: ` + dockerConfigSecretFile + `
 `
 
 // Compose struct for the docker compose yaml file
@@ -624,21 +625,6 @@ func GetContainerTags(dockerClient DockerClient) ([]string, *DockerError) {
 	}
 	tagArr = RemoveDuplicateEntries(tagArr)
 	return tagArr, nil
-}
-
-// DockerLogin : Login to a docker registry with the provided credentials.
-func DockerLogin(dockerClient DockerClient, address string, username string, password string) *DockerError {
-	ctx := context.Background()
-	// Remove docker.io
-	address = strings.TrimPrefix(address, "docker.io/")
-	authConfig := types.AuthConfig{ServerAddress: address, Username: username, Password: password}
-	authOkBody, err := dockerClient.RegistryLogin(ctx, authConfig)
-	if err != nil {
-		fmt.Printf("err: %v\n", err)
-		return &DockerError{errOpContainerList, err, err.Error()}
-	}
-	fmt.Printf("authOkBody: %v\n", authOkBody)
-	return nil
 }
 
 // AddDockerCredential : Add (or update) a single docker login in the keychain entry.

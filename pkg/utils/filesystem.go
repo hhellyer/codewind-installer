@@ -60,7 +60,7 @@ func WriteToComposeFile(dockerComposeFile string, debug bool) bool {
 		return false
 	}
 
-	writeDockerConfigFile()
+	writeDockerConfigSecretFile()
 	dataStruct := Compose{}
 
 	unmarshDataErr := yaml.Unmarshal([]byte(data), &dataStruct)
@@ -86,14 +86,14 @@ func WriteToComposeFile(dockerComposeFile string, debug bool) bool {
 	return true
 }
 
-func writeDockerConfigFile() {
+func writeDockerConfigSecretFile() {
 	dockerConfig := getDockerCredentials("local")
 	dockerConfigBytes, jsonErr := json.MarshalIndent(dockerConfig, "", "  ")
 	if jsonErr != nil {
 		errors.CheckErr(jsonErr, 208, "")
 	}
 	encoded := base64.StdEncoding.EncodeToString(dockerConfigBytes)
-	err := ioutil.WriteFile(dockerConfigFile, []byte(encoded), 0600)
+	err := ioutil.WriteFile(dockerConfigSecretFile, []byte(encoded), 0600)
 	errors.CheckErr(err, 204, "")
 }
 

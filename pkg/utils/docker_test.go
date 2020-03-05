@@ -479,3 +479,32 @@ func TestRemoveDuplicateEntries(t *testing.T) {
 		log.Fatal("Test 3: Failed to identify empty array values")
 	}
 }
+
+func TestAddAndRemoveDockerCredentials(t *testing.T) {
+	address1 := "myrepository:5000"
+	username1 := "user1"
+	password1 := "obviouspassword"
+
+	address2 := "myrepository2:5000"
+	username2 := "user2"
+	password2 := "obviouspasswordtoo"
+
+	beforeCredentials := getDockerCredentials("test")
+
+	AddDockerCredential("test", address1, username1, password1)
+	afterAddCredentials1 := getDockerCredentials("test")
+	assert.Equal(t, len(beforeCredentials.Auths)+1, len(afterAddCredentials1.Auths))
+
+	AddDockerCredential("test", address2, username2, password2)
+	afterAddCredentials2 := getDockerCredentials("test")
+	assert.Equal(t, len(beforeCredentials.Auths)+2, len(afterAddCredentials2.Auths))
+
+	RemoveDockerCredential("test", address1)
+	afterRemoveCredentials1 := getDockerCredentials("test")
+	assert.Equal(t, len(beforeCredentials.Auths)+1, len(afterRemoveCredentials1.Auths))
+
+	RemoveDockerCredential("test", address2)
+	afterRemoveCredentials2 := getDockerCredentials("test")
+	assert.Equal(t, len(beforeCredentials.Auths), len(afterRemoveCredentials2.Auths))
+
+}

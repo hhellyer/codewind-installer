@@ -678,7 +678,5 @@ func setDockerCredentials(connectionID string, dockerConfig *DockerConfig) {
 		os.Exit(1)
 	}
 	newSecret := string(newSecretBytes)
-	fmt.Printf("newSecret = %s\n", newSecret)
-	fmt.Println("Local connection, adding secret to keychain entry.")
 	keyring.Set("org.eclipse.codewind"+"."+connectionID, "docker_credentials", newSecret)
 }

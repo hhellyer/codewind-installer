@@ -637,6 +637,34 @@ func GetContainerTags(dockerClient DockerClient) ([]string, *DockerError) {
 	return tagArr, nil
 }
 
+// LoginToRegistry : Log in locally to a docker registry with the supplied credentials.
+func LoginToRegistry(address string, username string, password string) *DockerError {
+	// Pipe the password via stdin.
+	cmd := exec.Command("docker", "login", "--username", username, "--password-stdin", address)
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		// TODO - How to handle this? We've logged in inside PFE and added this to the
+		// keychain. Should we do this first?
+		// Yes, and the adding to secret, otherwise we add it and things don't survive restart.
+		return &DockerError{errDockerCredential, err, err.Error()}
+	}
+
+	// Write to stdin using an asyncrhonous go routine.
+	go func() {
+		defer stdin.Close()
+		io.WriteString(stdin, password)
+	}()
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return &DockerError{errDockerCredential, err, err.Error()}
+	}
+
+	fmt.Printf("%s\n", out)
+
+	return nil
+}
+
 // AddDockerCredential : Add (or update) a single docker login in the keychain entry.
 func AddDockerCredential(connectionID string, address string, username string, password string) *DockerError {
 	dockerConfig, err := getDockerCredentials(connectionID)

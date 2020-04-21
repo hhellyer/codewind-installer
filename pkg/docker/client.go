@@ -13,7 +13,6 @@ package docker
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"time"
 
@@ -39,6 +38,7 @@ func NewDockerClient() (DockerClient, *DockerError) {
 	if err != nil {
 		return nil, &DockerError{errOpClientCreate, err, err.Error()}
 	}
-	fmt.Printf("Client version is %s\n", dockerClient.ClientVersion())
+	// Use to confirm client.WithVersion("1.30") overrides client.FromEnv version.
+	// fmt.Printf("Client version is %s\n", dockerClient.ClientVersion())
 	return dockerClient, nil
 }

@@ -13,6 +13,7 @@ package docker
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"time"
 
@@ -34,10 +35,10 @@ type DockerClient interface {
 
 // NewDockerClient creates a new client for the docker API
 func NewDockerClient() (DockerClient, *DockerError) {
-	dockerClient, err := client.NewClientWithOpts(client.WithVersion("1.30"))
+	dockerClient, err := client.NewClientWithOpts(client.FromEnv, client.WithVersion("1.30"))
 	if err != nil {
 		return nil, &DockerError{errOpClientCreate, err, err.Error()}
 	}
-
+	fmt.Printf("Client version is %s\n", dockerClient.ClientVersion())
 	return dockerClient, nil
 }

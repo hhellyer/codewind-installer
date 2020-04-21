@@ -79,7 +79,6 @@ services:
   ports: ["127.0.0.1:${PFE_EXTERNAL_PORT}:9090"]
   volumes: ["/var/run/docker.sock:/var/run/docker.sock","cw-workspace:/codewind-workspace","${WORKSPACE_DIRECTORY}:/mounted-workspace"]
   networks: [network]
-  secrets: [dockerconfig]
  ` + performanceContainerName + `:
   image: ${PERFORMANCE_IMAGE_NAME}${PLATFORM}:${TAG}
   ports: ["127.0.0.1:9095:9095"]
@@ -519,9 +518,10 @@ func GetPFEHostAndPort(dockerClient DockerClient) (string, string, *DockerError)
 	}
 
 	// on Che, can assume PFE is always on localhost:9090
-	if os.Getenv("CHE_API_EXTERNAL") != "" {
-		return "localhost", "9090", nil
-	} else if containerIsRunning {
+	// if os.Getenv("CHE_API_EXTERNAL") != "" {
+	// 	return "localhost", "10000", nil
+	// } else
+	if containerIsRunning {
 		containerList, err := GetContainerList(dockerClient)
 		if err != nil {
 			return "", "", err

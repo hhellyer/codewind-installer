@@ -14,7 +14,6 @@ package config
 import (
 	"encoding/json"
 	"errors"
-	"os"
 
 	"github.com/eclipse/codewind-installer/pkg/connections"
 	"github.com/eclipse/codewind-installer/pkg/docker"
@@ -61,10 +60,10 @@ func getLocalHostnameAndPort() (string, *ConfigError) {
 		return "", &ConfigError{errOpConfPFEHostnamePortNotFound, err, err.Error()}
 	}
 
-	val, ok := os.LookupEnv("CHE_API_EXTERNAL")
-	if ok && (val != "") {
-		return "https://localhost:9090", nil
-	}
+	// val, ok := os.LookupEnv("CHE_API_EXTERNAL")
+	// if ok && (val != "") {
+	// 	return "https://localhost:9090", nil
+	// }
 
 	hostname, port, err := docker.GetPFEHostAndPort(dockerClient)
 	if err != nil {

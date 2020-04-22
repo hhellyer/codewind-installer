@@ -29,6 +29,7 @@ type DockerClient interface {
 	ContainerInspect(ctx context.Context, containerID string) (types.ContainerJSON, error)
 	ContainerStop(ctx context.Context, containerID string, timeout *time.Duration) error
 	ContainerRemove(ctx context.Context, containerID string, options types.ContainerRemoveOptions) error
+	DaemonHost() string
 	DistributionInspect(ctx context.Context, image, encodedRegistryAuth string) (registry.DistributionInspect, error)
 }
 
@@ -40,5 +41,11 @@ func NewDockerClient() (DockerClient, *DockerError) {
 	}
 	// Use to confirm client.WithVersion("1.30") overrides client.FromEnv version.
 	// fmt.Printf("Client version is %s\n", dockerClient.ClientVersion())
+	// fmt.Printf("DaemonHost is %s\n", dockerClient.DaemonHost())
 	return dockerClient, nil
+}
+
+// UsingLocalDockerHost returns true if we are using the default local docker host.
+func UsingLocalDockerHost(dockerClient DockerClient) bool {
+	return dockerClient.DaemonHost() == client.DefaultDockerHost
 }

@@ -79,6 +79,7 @@ services:
   ports: ["127.0.0.1:${PFE_EXTERNAL_PORT}:9090"]
   volumes: ["/var/run/docker.sock:/var/run/docker.sock","cw-workspace:/codewind-workspace","${WORKSPACE_DIRECTORY}:/mounted-workspace"]
   networks: [network]
+  secrets: [dockerconfig]
  ` + performanceContainerName + `:
   image: ${PERFORMANCE_IMAGE_NAME}${PLATFORM}:${TAG}
   ports: ["127.0.0.1:9095:9095"]

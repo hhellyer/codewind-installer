@@ -12,6 +12,7 @@
 package actions
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
@@ -31,6 +32,22 @@ func HandleDockerError(err *docker.DockerError) {
 		fmt.Println(err.Error())
 	} else {
 		logr.Error(err.Desc)
+	}
+}
+
+// HandleDockerWarning prints a Registry error as a warning, in JSON format if the global flag is set, and as a string if not
+func HandleDockerWarning(err *docker.DockerError) {
+	// printAsJSON is a global variable, set in commands.go
+	if printAsJSON {
+		type Output struct {
+			Operation   string `json:"warning"`
+			Description string `json:"error_description"`
+		}
+		warningJSON := Output{Operation: err.Op, Description: err.Desc}
+		errString, _ := json.Marshal(warningJSON)
+		fmt.Println(string(errString))
+	} else {
+		logr.Warn(err.Desc)
 	}
 }
 

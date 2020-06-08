@@ -53,8 +53,7 @@ func AddRegistrySecret(c *cli.Context) {
 	if !foundChe && localLogin {
 		dockerErr := docker.LoginToRegistry(address, username, password)
 		if dockerErr != nil {
-			HandleDockerError(dockerErr)
-			os.Exit(1)
+			HandleDockerWarning(dockerErr)
 		}
 	}
 
